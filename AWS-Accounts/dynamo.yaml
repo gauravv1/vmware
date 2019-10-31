@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: 'This CloudFormation template will deploy lambda function for
+DynamoDB table create, table will have VMWARE AWS account details for AWS team.
+Lambda function will be triggered on S3 bucket event.'
+Parameters:
+  DynamoTableName:
+    Description: DynamoDB Table Name
+    Type: String
+    Default: DynamoDBTable
+  S3Bucket:
+    Description: S3 Bucket name which contains lambda code.
+    Type: String
+    Default: S3Bucket
+  JSONFILE:
+    Description: JSON File name
+    Type: String
+    Default: JSONFile.json
+  Lambdarole:
+    Description: This lambda role should have access to write to DynamoDB table.
+    Type: String
+    Default: Role
+Resources:
+  VMWAREAWSACCTS:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref DynamoTableName
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+  accountstable:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: dynamo.record
+      Runtime: python3.7
+      CodeUri:
+        Bucket: !Ref S3Bucket
+        Key: dynamo.py.zip
+      MemorySize: 128
+      Timeout: 3
+      Role: !Join
+        - ""
+        - - 'arn:aws:iam::'
+          - !Ref AWS::AccountId
+          - ':role/'
+          - Ref: Lambdarole
+      Environment:
+        Variables:
+          file: !Ref JSONFILE
+          S3Bucket: !Ref S3Bucket
+          DynamoTableName: !Ref DynamoTableName
+      Events:
+        BucketEvent1:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: Bucket1
+            Events:
+              - 's3:ObjectCreated:*'
+  Bucket1:
+    Type: 'AWS::S3::Bucket'

@@ -1,0 +1,67 @@
+[
+	{
+		"owner_id": "000119676323",
+		"tags": [{
+			"key": "values",
+			"value": "N/A"
+		}]
+	},
+ {
+		"owner_id": "000161840463",
+		"tags": [{
+			"key": "COGS",
+			"value": "COGS"
+		}]
+	},
+ {
+		"owner_id": "000353986925",
+		"tags": [{"key": "COGS","value": "COGS"}]
+	},
+  {
+		"owner_id": "000371770084",
+		"tags": [{
+			"key": "Environment",
+			"value": "prd"
+		}, {
+			"key": "BU",
+			"value": "CPBU"
+		}, {
+			"key": "ServiceName",
+			"value": "VMC"
+		}, {
+			"key": "OwnerEmail",
+			"value": "cso-cloudmgmt@vmware.com"
+		}, {
+			"key": "CostCenter",
+			"value": "US70024"
+		}, {
+			"key": "ShortCostCenter",
+			"value": "024"
+		}]
+	},
+  {
+		"owner_id": "000560975014",
+		"tags": [{
+			"key": "Environment",
+			"value": "prd"
+		}, {
+			"key": "BU",
+			"value": "CPBU"
+		}, {
+			"key": "ServiceName",
+			"value": "VMC"
+		}, {
+			"key": "OwnerEmail",
+			"value": "cso-cloudmgmt@vmware.com"
+		}, {
+			"key": "CostCenter",
+			"value": "US70024"
+		}, {
+			"key": "ShortCostCenter",
+			"value": "024"
+		}, {
+			"key": "CloudHealthID",
+			"value": "137438961801"
+		}]
+	}
+]

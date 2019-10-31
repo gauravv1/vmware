@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description:
+  'This template will deploy two lambda functions and a SQS queue.
+  This deployment is to find cloudformation template vss_create_roles.yml
+  in US-East-1 region for all accounts in CSO Default OU.
+  If template does not exist, script in lambda functions
+  will create vss_create_roles.yml template.'
+Parameters:
+  Lambdarole:
+    Description: Role from master account to deploy Lambda. Role should have permissions to create and execute lambda.
+    Type: String
+    Default: LambdaRole
+  MasterAccountRole:
+    Description: Master account role which root account will use to communicate with all accounts.
+    Type: String
+    Default: OrganizationAccountAccessRole
+  RemoteAccountsCFRole:
+    Description: Role which will be used in remote accounts to create CloudFormation Templates.
+    Type: String
+    Default: CF-Role
+  S3Bucket:
+    Description: S3 bucket where lambda code and vss_create_roles.yaml template exists.
+    Type: String
+    Default: S3Bucket
+Resources:
+  VSSQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: VSSQueue
+  ACCTIDVSSROLE:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: accts_id_for_vss_create_roles.py.zip
+      Description: 'Lambda to send AWS Organizations Accounts # to SQS Queue.'
+      FunctionName: accts-id-for-vss-create-roles
+      Handler: accts_id_for_vss_create_roles.lambda_handler
+      Role: !Join
+        - ""
+        - - 'arn:aws:iam::'
+          - !Ref AWS::AccountId
+          - ':role/'
+          - Ref: Lambdarole
+      Timeout: 30
+      Runtime: python3.7
+      Environment:
+        Variables:
+          queueurl: !Ref VSSQ
+  VMWARECHKCFT:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: chk_vss_create_roles.role
+      Runtime: python3.7
+      Description: 'Lambda to check vss_create_roles.yml template in US-EAST-1'
+      Timeout: 30
+      Role: !Join
+        - ""
+        - - 'arn:aws:iam::'
+          - !Ref AWS::AccountId
+          - ':role/'
+          - Ref: Lambdarole
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: chk_vss_create_roles.py.zip
+      FunctionName: vss-create-role-chk-us-east
+      Environment:
+        Variables:
+          queueurl: !Ref VSSQ
+          OrgCrossAcctAccessRole: !Ref MasterAccountRole
+          CFRole: !Ref RemoteAccountsCFRole
+          S3Bucket: !Ref S3Bucket
+  VMWARECHKCFTEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      Enabled: true
+      EventSourceArn: !GetAtt VSSQ.Arn
+      FunctionName: !GetAtt VMWARECHKCFT.Arn
+  CWEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: 'This event rule trigger lambda accts-id-for-vss-create-roles as per schedule'
+      Name: 'VSS-create-role-scheduler'
+      ScheduleExpression: rate(1 day)
+      State: ENABLED
+      Targets:
+        -
+          Arn: !GetAtt ACCTIDVSSROLE.Arn
+          Id: !Ref ACCTIDVSSROLE
